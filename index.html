@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Reserva de aulas - IES Antonio García Bellido{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <h1 class="panel-title">Cuadrante semanal de ocupación</h1>
+
+    <form id="filtro-form" class="filtro-form">
+      <label>
+        Semana que contiene el día:
+        <input type="date" id="fecha" name="fecha" required />
+      </label>
+      <label>
+        Aula:
+        <select id="aula" name="aula">
+          <option value="">Todas</option>
+          <option value="Aula 206 (Inf A)">Aula 206 (Inf A)</option>
+          <option value="Aula 210 (Inf B)">Aula 210 (Inf B)</option>
+          <option value="Aula 209 (Inf C)">Aula 209 (Inf C)</option>
+          <option value="Biblioteca">Biblioteca</option>
+        </select>
+      </label>
+      <button type="submit">Ver cuadrante</button>
+      <button type="button" id="btn-imprimir" class="btn-secundario">Imprimir</button>
+    </form>
+
+    <div class="leyenda">
+      <span class="leyenda-item">
+        <span class="leyenda-color leyenda-libre"></span> Libre
+      </span>
+      <span class="leyenda-item">
+        <span class="leyenda-color leyenda-ocupada"></span> Ocupada
+      </span>
+      <span class="leyenda-item">
+        <span class="leyenda-color leyenda-hoy"></span> Hoy
+      </span>
+    </div>
+
+    <div id="cuadrante-contenedor" class="cuadrante-contenedor">
+      <p class="info-text">Selecciona una fecha para ver la semana correspondiente.</p>
+    </div>
+  </section>
+
+  <script>
+    function formatearFechaISO(fecha) {
+      const d = new Date(fecha);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const token = localStorage.getItem("apiToken");
+      if (!token) {
+        window.location.href = "/login";
+        return;
+      }
+
+      const hoy = new Date();
+      document.getElementById("fecha").value = formatearFechaISO(hoy);
+
+      const btnImprimir = document.getElementById("btn-imprimir");
+      btnImprimir.addEventListener("click", () => {
+        if (!document.getElementById("cuadrante-contenedor").innerHTML.trim()) {
+          return;
+        }
+        window.print();
+      });
+    });
+
+    const form = document.getElementById("filtro-form");
+    const contenedor = document.getElementById("cuadrante-contenedor");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fecha = document.getElementById("fecha").value;
+      const aula = document.getElementById("aula").value;
+
+      if (!fecha) return;
+
+      contenedor.innerHTML = "<p class='info-text'>Cargando cuadrante...</p>";
+
+      const params = new URLSearchParams({ fecha });
+      if (aula) params.append("aula", aula);
+
+      try {
+        const token = localStorage.getItem("apiToken");
+        if (!token) {
+          window.location.href = "/login";
+          return;
+        }
+
+        const resp = await fetch(`/cuadrante-semanal?${params.toString()}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!resp.ok) throw new Error("Error al obtener el cuadrante");
+        const data = await resp.json();
+        renderCuadrante(data);
+      } catch (err) {
+        contenedor.innerHTML = `<p class="error-text">${err.message}</p>`;
+      }
+    });
+
+    function renderCuadrante(data) {
+      const { dias, franjas_horarias, aulas, cuadrante } = data;
+      const hoyISO = formatearFechaISO(new Date());
+      const diasLegibles = dias.map((iso) => {
+        const d = new Date(iso);
+        return d.toLocaleDateString("es-ES", {
+          weekday: "short",
+          day: "2-digit",
+          month: "2-digit",
+        });
+      });
+
+      let html = "";
+
+      aulas.forEach((aulaNombre) => {
+        html += `<div class="cuadrante-aula"><h2 class="aula-titulo">${aulaNombre}</h2>`;
+        html += `<div class="tabla-cuadrante">`;
+
+        // Cabecera: vacío + días
+        html += `<div class="celda celda-header celda-hora-dia"></div>`;
+        dias.forEach((diaIso, idx) => {
+          const esHoy = diaIso === hoyISO;
+          html += `<div class="celda celda-header${esHoy ? " celda-hoy" : ""}">${diasLegibles[idx]}</div>`;
+        });
+
+        // Filas por franja
+        franjas_horarias.forEach((franja) => {
+          html += `<div class="celda celda-header franja-col">${franja}</div>`;
+
+          dias.forEach((diaIso) => {
+            const esHoy = diaIso === hoyISO;
+            const reserva = cuadrante[aulaNombre][franja][diaIso];
+            if (reserva) {
+              html += `<div class="celda celda-ocupada${esHoy ? " celda-hoy" : ""}">
+                         <span class="profesor-nombre">${reserva.profesor}</span>
+                       </div>`;
+            } else {
+              html += `<div class="celda celda-libre${esHoy ? " celda-hoy" : ""}">
+                         <span class="estado-libre">Libre</span>
+                       </div>`;
+            }
+          });
+        });
+
+        html += `</div></div>`;
+      });
+
+      contenedor.innerHTML = html;
+    }
+  </script>
+{% endblock %}
+

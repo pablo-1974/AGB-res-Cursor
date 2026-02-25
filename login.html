@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar sesión - Reserva de aulas{% endblock %}
+
+{% block content %}
+  <section class="panel">
+    <h1 class="panel-title">Iniciar sesión</h1>
+    <p class="info-text">
+      Introduce tu correo y contraseña para acceder a la reserva de aulas.
+    </p>
+
+    <form id="login-form" class="filtro-form">
+      <label>
+        Correo electrónico
+        <input type="email" id="email" name="email" required />
+      </label>
+      <label>
+        Contraseña
+        <input type="password" id="password" name="password" required />
+      </label>
+      <button type="submit">Entrar</button>
+    </form>
+
+    <p id="login-error" class="error-text" style="display: none;"></p>
+  </section>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("login-form");
+      const errorEl = document.getElementById("login-error");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errorEl.style.display = "none";
+        errorEl.textContent = "";
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        if (!email || !password) {
+          errorEl.textContent = "Debes introducir el correo y la contraseña.";
+          errorEl.style.display = "block";
+          return;
+        }
+
+        try {
+          const resp = await fetch("/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (!resp.ok) {
+            const data = await resp.json().catch(() => ({}));
+            const msg = data.detail || "Error al iniciar sesión.";
+            errorEl.textContent = msg;
+            errorEl.style.display = "block";
+            return;
+          }
+
+          const data = await resp.json();
+          if (data.token) {
+            localStorage.setItem("apiToken", data.token);
+            window.location.href = "/web";
+          } else {
+            errorEl.textContent = "Respuesta de autenticación inesperada.";
+            errorEl.style.display = "block";
+          }
+        } catch (err) {
+          errorEl.textContent = "No se ha podido contactar con el servidor.";
+          errorEl.style.display = "block";
+        }
+      });
+    });
+  </script>
+{% endblock %}
+

@@ -1,0 +1,281 @@
+/* Layout general */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f4f5f7;
+  color: #1f2933;
+}
+
+.topbar {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  background: #0f172a;
+  color: #f9fafb;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 960px;
+  width: 100%;
+}
+
+.logo-centro {
+  height: 48px;
+  width: auto;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.topbar-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.centro-nombre {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.app-nombre {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.main-container {
+  max-width: 960px;
+  margin: 1rem auto;
+  padding: 0 0.75rem 1.5rem;
+}
+
+.panel {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.panel-title {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.info-text {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.error-text {
+  font-size: 0.9rem;
+  color: #b91c1c;
+}
+
+/* Formulario de filtros */
+.filtro-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.filtro-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.filtro-form input[type="date"],
+.filtro-form select {
+  margin-top: 0.25rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.filtro-form button {
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.filtro-form button:hover {
+  background: #1d4ed8;
+}
+
+.btn-secundario {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.btn-secundario:hover {
+  background: #d1d5db;
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.leyenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.leyenda-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid #d1d5db;
+}
+
+.leyenda-libre {
+  background: #ecfdf3;
+}
+
+.leyenda-ocupada {
+  background: #fee2e2;
+}
+
+.leyenda-hoy {
+  background: #fef9c3;
+}
+
+/* Cuadrante */
+.cuadrante-aula {
+  margin-bottom: 1.5rem;
+}
+
+.aula-titulo {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.tabla-cuadrante {
+  display: grid;
+  grid-template-columns: minmax(90px, 1.1fr) repeat(5, minmax(70px, 1fr));
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.celda {
+  padding: 0.4rem 0.35rem;
+  border-bottom: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  font-size: 0.78rem;
+  box-sizing: border-box;
+}
+
+.celda:last-child {
+  border-right: none;
+}
+
+.celda-header {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.franja-col {
+  white-space: nowrap;
+}
+
+.celda-ocupada {
+  background: #fee2e2;
+}
+
+.celda-libre {
+  background: #ecfdf3;
+}
+
+.celda-hoy {
+  box-shadow: inset 0 0 0 2px #eab308;
+}
+
+.profesor-nombre {
+  display: block;
+  font-weight: 500;
+}
+
+.estado-libre {
+  font-size: 0.78rem;
+  color: #15803d;
+}
+
+/* Responsive: móviles */
+@media (max-width: 640px) {
+  .topbar {
+    padding: 0.5rem;
+  }
+
+  .logo-centro {
+    height: 40px;
+  }
+
+  .centro-nombre {
+    font-size: 0.85rem;
+  }
+
+  .app-nombre {
+    font-size: 0.75rem;
+  }
+
+  .panel {
+    padding: 0.75rem;
+  }
+
+  .filtro-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tabla-cuadrante {
+    grid-template-columns: minmax(80px, 1.1fr) repeat(5, minmax(65px, 1fr));
+    font-size: 0.75rem;
+  }
+
+  .celda {
+    padding: 0.3rem 0.25rem;
+  }
+}
+
+/* Modo impresión: optimizar cuadrante en papel */
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .topbar,
+  .filtro-form {
+    display: none;
+  }
+
+  .panel {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .tabla-cuadrante {
+    border: 1px solid #000000;
+  }
+
+  .celda {
+    font-size: 10pt;
+  }
+}
+
