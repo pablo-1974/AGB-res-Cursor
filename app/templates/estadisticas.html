@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Estadísticas - IES AGB{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1 class="panel-title">Estadísticas de reservas</h1>
+  <p class="info-text">Resumen global y desglose por aula y profesor.</p>
+
+  <!-- ESTADÍSTICAS GLOBALES -->
+  <div id="estad-global">
+    <p class="info-text">Cargando estadísticas...</p>
+  </div>
+
+  <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e5e7eb;" />
+
+  <!-- ESTADÍSTICAS POR AULA -->
+  <h2 class="panel-title">Estadísticas por aula</h2>
+
+  <label style="display:block; margin-bottom:0.5rem;">
+    Seleccione aula:
+    <select id="sel-aula" style="margin-left:0.5rem; padding:0.25rem;">
+      <option value="">-- elegir aula --</option>
+      <option value="Aula 206 (Inf A)">Aula 206 (Inf A)</option>
+      <option value="Aula 210 (Inf B)">Aula 210 (Inf B)</option>
+      <option value="Aula 209 (Inf C)">Aula 209 (Inf C)</option>
+      <option value="Biblioteca">Biblioteca</option>
+    </select>
+  </label>
+
+  <div id="estad-aula">
+    <p class="info-text">Seleccione un aula para ver el detalle.</p>
+  </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("apiToken");
+  const rol   = localStorage.getItem("rol");
+
+  if (!token) {
+    window.location.href = "/login";
+    return;
+  }
+
+  if (rol !== "admin") {
+    alert("Solo los administradores pueden acceder a esta página.");
+    window.location.href = "/web";
+    return;
+  }
+
+  const contGlobal = document.getElementById("estad-global");
+  const contAula = document.getElementById("estad-aula");
+  const selAula = document.getElementById("sel-aula");
+
+  // ------------------- ESTADÍSTICAS GLOBALES -------------------
+  async function cargarEstadGlobal() {
+    try {
+      const resp = await fetch("/estadisticas/reservas", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!resp.ok) throw new Error("Error al obtener estadísticas globales");
+
+      const data = await resp.json();
+
+      contGlobal.innerHTML = `
+        <p><strong>Hasta fecha:</strong> ${data.hasta_fecha}</p>
+        <p><strong>Total reservas:</strong> ${data.total_reservas}</p>
+        <h3 style="margin-top:1rem;">Reservas por aula</h3>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f3f4f6;">
+              <th style="padding:6px; border-bottom:1px solid #e5e7eb;">Aula</th>
+              <th style="padding:6px; border-bottom:1px solid #e5e7eb;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              Object.entries(data.por_aula)
+                .map(([aula, count]) => `
+                  <tr>
+                    <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${aula}</td>
+                    <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${count}</td>
+                  </tr>
+                `).join("")
+            }
+          </tbody>
+        </table>
+      `;
+    } catch (err) {
+      contGlobal.innerHTML = `<p class="error-text">${err.message}</p>`;
+    }
+  }
+
+  cargarEstadGlobal();
+
+  // ------------------- ESTADÍSTICAS POR AULA -------------------
+  selAula.addEventListener("change", async () => {
+    const aula = selAula.value;
+    if (!aula) {
+      contAula.innerHTML = `<p class="info-text">Seleccione un aula.</p>`;
+      return;
+    }
+
+    contAula.innerHTML = `<p class="info-text">Cargando...</p>`;
+
+    try {
+      const resp = await fetch(`/estadisticas/aula/${encodeURIComponent(aula)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!resp.ok) throw new Error("Error al obtener estadísticas del aula");
+
+      const data = await resp.json();
+
+      contAula.innerHTML = `
+        <p><strong>Aula:</strong> ${data.aula}</p>
+        <p><strong>Hasta fecha:</strong> ${data.hasta_fecha}</p>
+        <p><strong>Total reservas:</strong> ${data.total_reservas}</p>
+
+        <h3 style="margin-top:1rem;">Reservas por profesor</h3>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f3f4f6;">
+              <th style="padding:6px; border-bottom:1px solid #e5e7eb;">Profesor</th>
+              <th style="padding:6px; border-bottom:1px solid #e5e7eb;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              Object.entries(data.por_profesor)
+                .map(([prof, count]) => `
+                  <tr>
+                    <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${prof}</td>
+                    <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${count}</td>
+                  </tr>
+                `).join("")
+            }
+          </tbody>
+        </table>
+      `;
+    } catch (err) {
+      contAula.innerHTML = `<p class="error-text">${err.message}</p>`;
+    }
+  });
+
+});
+</script>
+{% endblock %}
