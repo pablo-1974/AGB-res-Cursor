@@ -24,56 +24,61 @@
     <p id="login-error" class="error-text" style="display: none;"></p>
   </section>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById("login-form");
-      const errorEl = document.getElementById("login-error");
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("login-form");
+    const errorEl = document.getElementById("login-error");
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        errorEl.style.display = "none";
-        errorEl.textContent = "";
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorEl.style.display = "none";
+      errorEl.textContent = "";
 
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
 
-        if (!email || !password) {
-          errorEl.textContent = "Debes introducir el correo y la contraseña.";
+      if (!email || !password) {
+        errorEl.textContent = "Debes introducir el correo y la contraseña.";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      try {
+        const resp = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => ({}));
+          const msg = data.detail || "Error al iniciar sesión.";
+          errorEl.textContent = msg;
           errorEl.style.display = "block";
           return;
         }
 
-        try {
-          const resp = await fetch("/auth/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email, password }),
-          });
+        const data = await resp.json();
 
-          if (!resp.ok) {
-            const data = await resp.json().catch(() => ({}));
-            const msg = data.detail || "Error al iniciar sesión.";
-            errorEl.textContent = msg;
-            errorEl.style.display = "block";
-            return;
-          }
+        if (data.token) {
+          localStorage.setItem("apiToken", data.token);
+          // 👇 GUARDAR también info de sesión para el menú
+          if (data.rol)   localStorage.setItem("rol", String(data.rol).toLowerCase());
+          if (data.nombre) localStorage.setItem("nombre", data.nombre);
+          if (data.email)  localStorage.setItem("email", data.email);
 
-          const data = await resp.json();
-          if (data.token) {
-            localStorage.setItem("apiToken", data.token);
-            window.location.href = "/web";
-          } else {
-            errorEl.textContent = "Respuesta de autenticación inesperada.";
-            errorEl.style.display = "block";
-          }
-        } catch (err) {
-          errorEl.textContent = "No se ha podido contactar con el servidor.";
+          window.location.href = "/web";
+        } else {
+          errorEl.textContent = "Respuesta de autenticación inesperada.";
           errorEl.style.display = "block";
         }
-      });
+      } catch (err) {
+        errorEl.textContent = "No se ha podido contactar con el servidor.";
+        errorEl.style.display = "block";
+      }
     });
-  </script>
+  });
+</script>
 {% endblock %}
+
 
