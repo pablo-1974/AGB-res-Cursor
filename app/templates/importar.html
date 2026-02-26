@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Importar profesores - IES AGB{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1 class="panel-title">Importar profesores desde Excel</h1>
+  <p class="info-text">
+    Sube un Excel con una hoja activa donde la primera fila sea cabecera y las dos primeras columnas sean
+    <strong>nombre</strong> y <strong>email</strong>. El endpoint creará usuarios con rol <em>profesor</em>
+    para los que no existan aún.
+  </p>
+
+  <form id="form-importar" class="filtro-form">
+    <label>
+      Fichero Excel:
+      <input type="file" id="fichero" name="fichero" accept=".xlsx,.xls" required />
+    </label>
+    <button type="submit">Importar</button>
+  </form>
+
+  <div id="resultado" class="info-text"></div>
+
+  <details style="margin-top:1rem;">
+    <summary>Plantilla de ejemplo</summary>
+    <div style="margin-top:0.5rem; font-size:0.9rem;">
+      <pre style="background:#f3f4f6; padding:0.75rem; border-radius:8px;">
+nombre,email
+"Profe Uno","profe1@centro.es"
+"Profe Dos","profe2@centro.es"
+      </pre>
+      <p class="info-text">
+        (Guárdalo como <code>.xlsx</code> y asegúrate de que la hoja con esos datos es la activa.)
+      </p>
+    </div>
+  </details>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("apiToken");
+  const rol   = localStorage.getItem("rol");
+
+  if (!token) {
+    window.location.href = "/login";
+    return;
+  }
+  if (rol !== "admin") {
+    alert("Solo los administradores pueden acceder a esta página.");
+    window.location.href = "/web";
+    return;
+  }
+
+  const form = document.getElementById("form-importar");
+  const inputFile = document.getElementById("fichero");
+  const resultado = document.getElementById("resultado");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const file = inputFile.files[0];
+    if (!file) {
+      resultado.textContent = "Selecciona un fichero .xlsx o .xls";
+      resultado.className = "error-text";
+      return;
+    }
+
+    resultado.textContent = "Subiendo y procesando...";
+    resultado.className = "info-text";
+
+    const fd = new FormData();
+    fd.append("fichero", file);
+
+    try {
+      const resp = await fetch("/usuarios/importar-profesores", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: fd
+      });
+
+      if (!resp.ok) {
+        let msg = "Error al importar";
+        try {
+          const err = await resp.json();
+          if (err && err.detail) msg = err.detail;
+        } catch {}
+        throw new Error(msg);
+      }
+
+      const data = await resp.json();
+      // Tu backend devuelve {"creados": X, "ya_existian": Y}
+      resultado.innerHTML = `✅ <strong>Importación completada</strong><br>
+                             Creados: <strong>${data.creados}</strong> · Ya existían: <strong>${data.ya_existian}</strong>`;
+      resultado.className = "info-text";
+      form.reset();
+
+    } catch (err) {
+      resultado.textContent = err.message;
+      resultado.className = "error-text";
+    }
+  });
+});
+</script>
+{% endblock %}
