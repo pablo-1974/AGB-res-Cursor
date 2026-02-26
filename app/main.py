@@ -277,6 +277,9 @@ def web_home(request: Request):
     """
     return templates.TemplateResponse("index.html", {"request": request})
 
+@app.get("/web/reservar", response_class=HTMLResponse)
+def web_reservar(request: Request):
+    return templates.TemplateResponse("reservar.html", {"request": request})
 
 @app.post("/setup/crear-admin-inicial", response_model=schemas.UsuarioOut)
 def crear_admin_inicial(
@@ -1169,6 +1172,7 @@ def configurar_scheduler() -> None:
     )
     scheduler_local.start()
     scheduler = scheduler_local
+
 
 
 
