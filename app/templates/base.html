@@ -4,18 +4,92 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Reserva de aulas - IES Antonio García Bellido{% endblock %}</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', path='styles.css') }}"
-    />
+
+    <!-- CSS principal -->
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
+
+    <!-- ====== MENÚ CSS ====== -->
+    <style>
+      nav.menu {
+        background: #0f172a;
+        color: white;
+        padding: 0.5rem 1rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      nav.menu ul {
+        list-style: none;
+        display: flex;
+        gap: 1.5rem;
+        margin: 0;
+        padding: 0;
+      }
+
+      nav.menu a {
+        color: white;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+
+      .submenu {
+        position: relative;
+      }
+
+      .submenu ul {
+        display: none;
+        position: absolute;
+        top: 22px;
+        left: 0;
+        background: #1e293b;
+        padding: 0.5rem;
+        border-radius: 6px;
+        min-width: 180px;
+        flex-direction: column;
+        z-index: 20;
+      }
+
+      .submenu:hover ul {
+        display: flex;
+      }
+
+      .submenu ul li {
+        padding: 0.35rem 0.5rem;
+      }
+
+      .submenu ul li a:hover {
+        text-decoration: underline;
+      }
+    </style>
+
+    <!-- ====== SCRIPT DE SESIÓN ====== -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("apiToken");
+        const rol   = localStorage.getItem("rol");
+
+        // Ocultamos menú admin si no corresponde
+        const adminMenu = document.getElementById("menu-admin");
+        if (adminMenu && rol !== "admin") {
+          adminMenu.style.display = "none";
+        }
+      });
+
+      function logout() {
+        localStorage.clear();
+        window.location.href = "/login";
+      }
+    </script>
   </head>
+
   <body>
+    <!-- ====== HEADER SUPERIOR ====== -->
     <header class="topbar">
       <div class="topbar-left">
         <img
           src="{{ url_for('static', path='logo.png') }}"
-          alt="Logo IES Antonio García Bellido"
           class="logo-centro"
+          alt="Logo del centro"
           onerror="this.style.display='none'"
         />
         <div class="topbar-titles">
@@ -25,10 +99,44 @@
       </div>
     </header>
 
+    <!-- ====== MENÚ PRINCIPAL ====== -->
+    <nav class="menu">
+      <ul>
+        <li>/webCuadrante</a></li>
+
+        <li class="submenu">
+          #Reservas ▼</a>
+          <ul>
+            <li>/web/reservarHacer reserva</a></li>
+            <li>/web/mis-reservasMis reservas</a></li>
+          </ul>
+        </li>
+
+        <li class="submenu" id="menu-admin">
+          #Administración ▼</a>
+          <ul>
+            <li>/web/usuariosUsuarios</a></li>
+            <li>/web/importarImportar profesores</a></li>
+            <li>/web/estadisticasEstadísticas</a></li>
+          </ul>
+        </li>
+
+        <li class="submenu">
+          #Cuenta ▼</a>
+          <ul>
+            <li>/web/cambiar-passwordCambiar contraseña</a></li>
+            <li><a onclick="logout()" style="cursor:pointer;">Cerrar sesión</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- ====== CONTENIDO DE LA PÁGINA ====== -->
     <main class="main-container">
       {% block content %}{% endblock %}
     </main>
   </body>
 </html>
+
 
 
