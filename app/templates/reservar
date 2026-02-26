@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Hacer una reserva - IES AGB{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1 class="panel-title">Hacer una reserva</h1>
+
+  <form id="form-reserva" class="filtro-form">
+    <label>
+      Fecha:
+      <input type="date" id="fecha" name="fecha" required />
+    </label>
+
+    <label>
+      Aula:
+      <select id="aula" name="aula" required>
+        <option value="">Seleccione aula</option>
+      </select>
+    </label>
+
+    <label>
+      Franja horaria:
+      <select id="franja" name="franja" required>
+        <option value="">Seleccione franja</option>
+      </select>
+    </label>
+
+    <button type="submit">Crear reserva</button>
+  </form>
+
+  <p id="mensaje" class="info-text"></p>
+</section>
+
+<script>
+  // Función para obtener fecha en formato YYYY-MM-DD
+  function formatearFechaISO(fecha) {
+    const d = new Date(fecha);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("apiToken");
+    const rol = localStorage.getItem("rol");
+
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    // Poner fecha de hoy por defecto
+    document.getElementById("fecha").value = formatearFechaISO(new Date());
+
+    // --- Cargar AULAS desde schemas ---
+    const aulas = [
+      "Aula 206 (Inf A)",
+      "Aula 210 (Inf B)",
+      "Aula 209 (Inf C)",
+      "Biblioteca"
+    ];
+
+    const selectAula = document.getElementById("aula");
+    aulas.forEach(a => {
+      const opt = document.createElement("option");
+      opt.value = a;
+      opt.textContent = a;
+      selectAula.appendChild(opt);
+    });
+
+    // --- Cargar FRANJAS desde schemas ---
+    const franjas = [
+      "08:40-09:30",
+      "09:35-10:25",
+      "10:30-11:20",
+      "11:50-12:40",
+      "12:45-13:35",
+      "13:40-14:30"
+    ];
+
+    const selectFranja = document.getElementById("franja");
+    franjas.forEach(f => {
+      const opt = document.createElement("option");
+      opt.value = f;
+      opt.textContent = f;
+      selectFranja.appendChild(opt);
+    });
+
+    // --- Manejar envío del formulario ---
+    const form = document.getElementById("form-reserva");
+    const mensaje = document.getElementById("mensaje");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fecha = document.getElementById("fecha").value;
+      const aula = document.getElementById("aula").value;
+      const franja = document.getElementById("franja").value;
+
+      mensaje.textContent = "Creando reserva...";
+
+      try {
+        const resp = await fetch("/reservas", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            fecha,
+            aula,
+            franja_horaria: franja,
+            profesor: "" // tu backend ignora este campo si el rol es PROFESOR
+          })
+        });
+
+        if (!resp.ok) {
+          const error = await resp.json();
+          throw new Error(error.detail || "Error desconocido");
+        }
+
+        mensaje.textContent = "Reserva creada correctamente ✔️";
+        mensaje.className = "info-text";
+
+      } catch (err) {
+        mensaje.textContent = err.message;
+        mensaje.className = "error-text";
+      }
+    });
+  });
+</script>
+
+{% endblock %}
