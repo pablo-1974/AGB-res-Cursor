@@ -293,6 +293,10 @@ def web_usuarios(request: Request):
 def web_importar(request: Request):
     return templates.TemplateResponse("importar.html", {"request": request})
 
+@app.get("/web/estadisticas", response_class=HTMLResponse)
+def web_estadisticas(request: Request):
+    return templates.TemplateResponse("estadisticas.html", {"request": request})
+
 @app.post("/setup/crear-admin-inicial", response_model=schemas.UsuarioOut)
 def crear_admin_inicial(
     datos: schemas.UsuarioCreate,
@@ -1184,6 +1188,7 @@ def configurar_scheduler() -> None:
     )
     scheduler_local.start()
     scheduler = scheduler_local
+
 
 
 
