@@ -8,7 +8,7 @@
     <!-- CSS principal -->
     <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
 
-    <!-- ====== MENÚ CSS ====== -->
+    <!-- ===== CSS del menú ===== -->
     <style>
       nav.menu {
         background: #0f172a;
@@ -26,16 +26,17 @@
         padding: 0;
       }
 
+      nav.menu ul li {
+        position: relative;
+      }
+
       nav.menu a {
         color: white;
         text-decoration: none;
         font-size: 0.9rem;
       }
 
-      .submenu {
-        position: relative;
-      }
-
+      /* Submenús */
       .submenu ul {
         display: none;
         position: absolute;
@@ -62,16 +63,14 @@
       }
     </style>
 
-    <!-- ====== SCRIPT DE SESIÓN ====== -->
+    <!-- ===== Control de sesión ===== -->
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const token = localStorage.getItem("apiToken");
-        const rol   = localStorage.getItem("rol");
+        const rol = localStorage.getItem("rol");
+        const adminSection = document.getElementById("menu-admin");
 
-        // Ocultamos menú admin si no corresponde
-        const adminMenu = document.getElementById("menu-admin");
-        if (adminMenu && rol !== "admin") {
-          adminMenu.style.display = "none";
+        if (adminSection && rol !== "admin") {
+          adminSection.style.display = "none";
         }
       });
 
@@ -83,7 +82,7 @@
   </head>
 
   <body>
-    <!-- ====== HEADER SUPERIOR ====== -->
+    <!-- HEADER -->
     <header class="topbar">
       <div class="topbar-left">
         <img
@@ -99,16 +98,7 @@
       </div>
     </header>
 
-    <!-- ====== MENÚ PRINCIPAL ====== -->
-    <nav class="menu">
-      <ul>
-        <li>/webCuadrante</a></li>
-
-        <li class="submenu">
-          #Reservas ▼</a>
-          <ul>
-            <li>/web/reservarHacer reserva</a></li>
-            <li>/web/mis-reservasMis reservas</a></li>
+    <!-- MENÚ reservas</a></li>
           </ul>
         </li>
 
@@ -131,12 +121,9 @@
       </ul>
     </nav>
 
-    <!-- ====== CONTENIDO DE LA PÁGINA ====== -->
+    <!-- CONTENIDO DE CADA PÁGINA -->
     <main class="main-container">
       {% block content %}{% endblock %}
     </main>
   </body>
 </html>
-
-
-
