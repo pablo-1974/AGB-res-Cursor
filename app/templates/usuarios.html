@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de usuarios - IES AGB{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1 class="panel-title">Gestión de usuarios</h1>
+
+  <p class="info-text">Aquí puedes administrar a los usuarios del sistema.</p>
+
+  <div id="contenedor-usuarios">
+    <p class="info-text">Cargando usuarios...</p>
+  </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("apiToken");
+    const rol = localStorage.getItem("rol");
+
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    if (rol !== "admin") {
+        alert("Solo los administradores pueden acceder aquí.");
+        window.location.href = "/web";
+        return;
+    }
+
+    cargarUsuarios();
+
+    async function cargarUsuarios() {
+        const cont = document.getElementById("contenedor-usuarios");
+        cont.innerHTML = "<p class='info-text'>Cargando usuarios...</p>";
+
+        try {
+            const resp = await fetch("/usuarios", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!resp.ok) throw new Error("No se pudo obtener la lista de usuarios");
+
+            const lista = await resp.json();
+
+            let html = `
+                <table style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background:#f3f4f6;">
+                            <th style="padding:8px; border-bottom:1px solid #e5e7eb;">Nombre</th>
+                            <th style="padding:8px; border-bottom:1px solid #e5e7eb;">Email</th>
+                            <th style="padding:8px; border-bottom:1px solid #e5e7eb;">Rol</th>
+                            <th style="padding:8px; border-bottom:1px solid #e5e7eb;">Activo</th>
+                            <th style="padding:8px; border-bottom:1px solid #e5e7eb;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            lista.forEach(u => {
+                html += `
+                    <tr>
+                        <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${u.nombre}</td>
+                        <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${u.email}</td>
+                        <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${u.rol}</td>
+                        <td style="padding:6px; border-bottom:1px solid #e5e7eb;">
+                            ${u.activo ? "Sí" : "No"}
+                        </td>
+                        <td style="padding:6px; border-bottom:1px solid #e5e7eb;">
+                            <button onclick="toggleActivo(${u.id}, ${u.activo})"
+                                style="padding:4px 10px; background:#1e40af; color:white; border:none; border-radius:5px;">
+                                ${u.activo ? "Desactivar" : "Activar"}
+                            </button>
+
+                            <button onclick="cambiarRol(${u.id})"
+                                style="padding:4px 10px; background:#4b5563; color:white; border:none; border-radius:5px;">
+                                Cambiar rol
+                            </button>
+
+                            <button onclick="resetPassword(${u.id})"
+                                style="padding:4px 10px; background:#ca8a04; color:white; border:none; border-radius:5px;">
+                                Reset pass
+                            </button>
+
+                            <button onclick="borrarUsuario(${u.id})"
+                                style="padding:4px 10px; background:#dc2626; color:white; border:none; border-radius:5px;">
+                                Borrar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += "</tbody></table>";
+
+            cont.innerHTML = html;
+
+        } catch (err) {
+            cont.innerHTML = `<p class="error-text">${err.message}</p>`;
+        }
+    }
+
+    // ---- ACTIVAR / DESACTIVAR ----
+    window.toggleActivo = async function(id, activo) {
+        const accion = activo ? "desactivar" : "activar";
+
+        if (!confirm(`¿Seguro que deseas ${accion} este usuario?`)) return;
+
+        const url = `/usuarios/${id}/${accion}`;
+        await accionSimple(url);
+    };
+
+    // ---- CAMBIAR ROL ----
+    window.cambiarRol = async function(id) {
+        const nuevo = prompt("Nuevo rol (admin/profesor):");
+
+        if (!nuevo || !["admin", "profesor"].includes(nuevo.toLowerCase())) {
+            alert("Rol inválido.");
+            return;
+        }
+
+        await accionSimple(`/usuarios/${id}/rol`, {
+            method: "PATCH",
+            body: JSON.stringify({ rol: nuevo }),
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            }
+        });
+    };
+
+    // ---- RESET PASSWORD ----
+    window.resetPassword = async function(id) {
+        if (!confirm("¿Resetear contraseña?")) return;
+        await accionSimple(`/usuarios/${id}/reset-password`);
+    };
+
+    // ---- BORRAR ----
+    window.borrarUsuario = async function(id) {
+        if (!confirm("¿Seguro que deseas borrar este usuario?")) return;
+        await accionSimple(`/usuarios/${id}`, { method: "DELETE" });
+    };
+
+    // ---- FUNCIÓN AUXILIAR ----
+    async function accionSimple(url, opciones = {}) {
+        const token = localStorage.getItem("apiToken");
+        try {
+            const resp = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}` },
+                ...opciones
+            });
+
+            if (!resp.ok) {
+                const error = await resp.json();
+                throw new Error(error.detail || "Error en la operación");
+            }
+
+            cargarUsuarios();
+
+        } catch (err) {
+            alert(err.message);
+        }
+    }
+});
+</script>
+{% endblock %}
