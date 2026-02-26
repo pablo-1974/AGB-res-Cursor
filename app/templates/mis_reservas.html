@@ -1,1 +1,113 @@
+{% extends "base.html" %}
 
+{% block title %}Mis reservas - IES AGB{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1 class="panel-title">Mis reservas</h1>
+
+  <p class="info-text">Aquí puedes ver y cancelar tus reservas.</p>
+
+  <div id="contenedor-reservas">
+    <p class="info-text">Cargando reservas...</p>
+  </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("apiToken");
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    cargarReservas();
+
+    async function cargarReservas() {
+        const contenedor = document.getElementById("contenedor-reservas");
+        contenedor.innerHTML = "<p class='info-text'>Cargando reservas...</p>";
+
+        try {
+            const resp = await fetch("/reservas", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (!resp.ok) throw new Error("Error al obtener reservas");
+
+            const lista = await resp.json();
+
+            if (lista.length === 0) {
+                contenedor.innerHTML = "<p class='info-text'>No tienes reservas.</p>";
+                return;
+            }
+
+            let html = `
+              <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background:#f3f4f6;">
+                    <th style="padding:8px; border-bottom:1px solid #e5e7eb;">Aula</th>
+                    <th style="padding:8px; border-bottom:1px solid #e5e7eb;">Fecha</th>
+                    <th style="padding:8px; border-bottom:1px solid #e5e7eb;">Franja</th>
+                    <th style="padding:8px; border-bottom:1px solid #e5e7eb;">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+            `;
+
+            lista.forEach(r => {
+                html += `
+                  <tr>
+                    <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${r.aula}</td>
+                    <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${r.fecha}</td>
+                    <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${r.franja_horaria}</td>
+                    <td style="padding:6px; border-bottom:1px solid #e5e7eb;">
+                      <button onclick="cancelarReserva(${r.id})" style="
+                          padding:4px 10px;
+                          background:#dc2626;
+                          color:white;
+                          border:none;
+                          border-radius:6px;
+                          cursor:pointer;
+                      ">Cancelar</button>
+                    </td>
+                  </tr>
+                `;
+            });
+
+            html += "</tbody></table>";
+
+            contenedor.innerHTML = html;
+
+        } catch (err) {
+            contenedor.innerHTML = `<p class="error-text">${err.message}</p>`;
+        }
+    }
+
+    // ---- CANCELAR ----
+    window.cancelarReserva = async function(id) {
+        if (!confirm("¿Seguro que deseas cancelar esta reserva?")) return;
+
+        const token = localStorage.getItem("apiToken");
+
+        try {
+            const resp = await fetch(`/reservas/${id}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json();
+                throw new Error(err.detail || "Error al cancelar");
+            }
+
+            cargarReservas();  // recargar tras borrar
+
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+});
+</script>
+{% end
