@@ -3,14 +3,6 @@ import uuid
 from typing import Any, Dict, List
 
 import os
-from fastapi import HTTPException, status, Depends
-from sqlalchemy.orm import Session
-
-# 👇 Ajusta estos imports a tu proyecto, tal y como ya los uses en tu API
-from app.database import get_db               # Debe existir en tu proyecto
-from app.models import Usuario                # Modelo de usuario (ajusta el nombre si difiere)
-from app.security import hash_password        # Si tienes util para hashear. Si no, te doy una alternativa abajo.
-
 import json
 import io
 import smtplib
@@ -1177,5 +1169,6 @@ def configurar_scheduler() -> None:
     )
     scheduler_local.start()
     scheduler = scheduler_local
+
 
 
